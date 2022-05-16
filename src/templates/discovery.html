@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Discovery</title>
+{% endblock %}
+
+{% block body %}
+<nav class="navbar border border-dark navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">SideKick</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <a class="nav-link" href="\discovery">Discovery <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="\devices">Devices</a>
+      </li>
+      <!--li class="nav-item">
+        <a class="nav-link" href="#">Pricing</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Dropdown link
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#">Action</a>
+          <a class="dropdown-item" href="#">Another action</a>
+          <a class="dropdown-item" href="#">Something else here</a>
+        </div>
+      </li-->
+    </ul>
+  </div>
+  <div class="navbar-right">
+    <span class="text-secondary"><i class="fa fa-fw fa-user"></i>{{session['username']}}</span>
+    <a class="btn btn-outline-secondary my-2 my-sm-0 btn-sm mr-1" type="submit" href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="container-md">
+    <h1 style="text-align: center">NetMRI - Discovery</h1>
+    <div>
+        <div class="col">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#discovernow-modal">Discover Now!</button>
+            <!--a class="btn btn-primary" href="/logout" type="submit">Logout</a-->
+        </div>
+    </div>
+    <br>
+
+    <table class="table table-bordered">
+        <tr class = "table-primary">
+            <th>ID</th>
+            <th>Discover ID</th>
+            <th>Address</th>            
+            <th>User</th>
+            <th>Submit Time</th>
+            <th>Action</th>
+        </tr>
+        {% for row in rows %}
+            <tr>
+                <td>{{row['id']}}</td>
+                <td>{{row['discovery_id']}}</td>
+                <td>{{row['address']}}</td>
+                <td>{{row['user']}}</td>
+                <td>{{row['submit_time']}}</td>
+                <td>
+                   <button class="btnEdit btn btn-warning">Status</button>
+                    <!-- <a href="/update/">Update</a> -->
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+</div>
+    <!-- modal itself -->
+    <div class="modal fade" id="discovernow-modal" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modal-title">Discover Device Now</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p> Once submitted, the discovery job will be displayed. It will likely take several minutes for the job to complete.  Do not resubmit same discovery multiple times.</p>
+            <label for="modal-email" class="form-label">IP Address to be discovered:</label>            
+            <div class="form">
+              <form action="/discovernow" method="POST">
+                <input type="text" required pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" id="discoveryip" name="discoveryip" placeholder="e.g. 172.16.75.1">
+                <!--<button type="submit" class="btn btn-primary">Submit</button> -->
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>               
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+        <!-- modal itself -->
+      <div class="modal fade" id="discovery_status1" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modal-title">Discovery Status</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"><small>
+              <div id="output"></div></small>           
+            <div class="modal-footer">
+              <button type="submit" id=btnRefresh class="btnRefreshStatus btn btn-primary">Refresh</button>
+            </div>               
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
+<script type="text/javascript">
+
+var gblDiscoverId = ""; // Define global variable to be used in function
+
+$(document).ready(function() {
+  $(".btnEdit").click(function (e) {
+      e.preventDefault(); // prevent form from reloading page
+      var currentTds = $(this).closest("tr").find("td"); // find all td of selected row
+      var cell1 = $(currentTds).eq(1).text(); // eq= cell , text = inner text
+      gblDiscoverId = cell1;
+      $.ajax({
+         data : {
+            discovery_id : cell1,
+                },
+            type : 'POST',
+            url : '/discovery_status'
+           })  
+       .done(function(data) { 
+        $('#output').html(data.output).show();       
+        $("#discovery_status1").modal('show');
+      });
+      event.preventDefault();
+     });
+});
+
+document.getElementById('btnRefresh').addEventListener("click", function () {
+      $.ajax({
+         data : {
+            discovery_id : gblDiscoverId,
+                },
+            type : 'POST',
+            url : '/discovery_status'
+           })  
+       .done(function(data) { 
+        $('#output').html(data.output).show();       
+      });
+      event.preventDefault();
+     });
+
+
+</script>
+
+{% endblock %}
+

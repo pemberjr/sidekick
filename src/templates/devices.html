@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Discovery</title>
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+rel="stylesheet"
+integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+crossorigin="anonymous"
+/>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css"/>
+{% endblock %}
+
+{% block body %}
+<nav class="navbar border border-dark navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">SideKick</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <a class="nav-link" href="\discovery">Discovery</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="\devices">Devices<span class="sr-only">(current)</span></a>
+      </li>
+      <!--li class="nav-item">
+        <a class="nav-link" href="#">Pricing</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Dropdown link
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#">Action</a>
+          <a class="dropdown-item" href="#">Another action</a>
+          <a class="dropdown-item" href="#">Something else here</a>
+        </div>
+      </li-->
+    </ul>
+  </div>
+  <div class="navbar-right"><i class="bi bi-person"></i>
+    <span class="text-secondary"><i class="fa fa-fw fa-user"></i>{{session['username']}}</span>
+    <a class="btn btn-outline-secondary my-2 my-sm-0 btn-sm mr-1" type="submit" href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="container mt-4">
+    <h1 style="text-align: center">NetMRI - Devices</h1>
+
+    <br>
+
+    <table  id="datatable" class="table display table-bordered table-striped" >
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Device Name</th>
+            <th>Address</th>            
+            <th>Assurance</th>            
+            <th>Location</th>
+            <th>Model</th>
+          </tr>
+        </thead>
+    </table>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.12.0/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.0/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  $('#datatable').DataTable({
+            "ajax": {
+                // "url": "static/objects2.txt", // This works for a static file
+                "url": "/device_table", // This now also works
+                "dataType": "json",
+                "dataSrc": "data",
+                "contentType":"application/json"
+            },
+             'columns': [
+                 { data: 'DeviceID' },
+                 { data: 'DeviceName' },
+                 { data: 'DeviceIPDotted' },
+                 { data: 'DeviceAssurance'},
+                 { data: 'DeviceSysLocation' },
+                 { data: 'DeviceModel' },
+             ]
+         });
+});
+
+</script>
+
+<script>
+$(document).ready(function () {
+  var mytable = $('#datatable').DataTable();
+ 
+    $('#datatable tbody').on('click', 'tr', function () {
+        if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+        } else {
+            mytable.$('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+        }
+    }); 
+  });
+</script>
+
+
+
+{% endblock %}
+
