@@ -23,6 +23,6 @@ COPY . .
 
 RUN pip3 install -r requirements.txt
 
-EXPOSE 5050
+EXPOSE 5051
 
-CMD ["python3", "./src/app.py", "5050"]
+CMD ["python3", "./src/app.py", "5051"]
