@@ -26,9 +26,16 @@ db_pass =(config['DEFAULT']['DB2_PASS'])
 db_host =(config['DEFAULT']['DB2_HOST'])
 db      =(config['DEFAULT']['DB2'])
 
+
+
 cnx = None
 
 nm_device_group = "25"
+
+proxies = {
+        "http": "",
+        "https": "",
+        }
 
 #cnx = mysql.connector.connect(user=db_user, password=db_pass, host=db_host, database=db)
 #cursor = cnx.cursor(buffered=True,dictionary=True)
@@ -41,6 +48,8 @@ class StatusException(Exception):
 app = Flask(__name__)
 flask_secret = (config['DEFAULT']['FLASK_SECRET_KEY'])
 app.secret_key= flask_secret
+
+
 
 @app.route('/discovery')
 def discovery():
@@ -78,7 +87,7 @@ def discovernow():
 
                 print(url)
 
-                response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False)
+                response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
                 print(response)
                 if response.status_code == 200:
                     print(response.text)
@@ -134,7 +143,7 @@ def discovery_status():
             url = "https://netmri.sce.com/api/3.5/discovery_statuses/discover_now?id={}".format(discoveryip)
             print(url)
 
-            response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False)
+            response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
             print(response)
             if response.status_code == 200:
                 print(response.text)
@@ -166,7 +175,7 @@ def login():
         # Input from HTML Forms
         username = request.form["username"].strip()
         password = request.form["password"].strip()
-        
+
         # Set the Session Attribute
         session["username"] = username
 
@@ -175,7 +184,7 @@ def login():
 
         # Set the NetMRI Authentication Check
         url = "https://{}/api/authenticate?username={}&password={}".format(nm_host, username, parsed_pw)
-        response = requests.get(url, headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False)
+        response = requests.get(url, headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
         print(response)
         if response.status_code == 200:
             # Send to the discovery page (PASSED AUTH)
@@ -186,7 +195,7 @@ def login():
             return render_template("login.html")
 
     else:
-        # GET REQUEST 
+        # GET REQUEST
         return render_template("login.html")
 
 
@@ -197,9 +206,9 @@ def devices():
         print(session['username'])
         return render_template('devices.html')
     else:
-        return redirect(url_for("login"))      
-        
-        
+        return redirect(url_for("login"))
+
+
 
 @app.route("/logout")
 def logout():
@@ -218,7 +227,7 @@ def table():
             url = "https://{}/api/3.5/devices/find?DeviceGroupID={}&limit={}".format(nm_host, nm_device_group, limit)
             print(url)
 
-            response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False)
+            response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
             print(response)
             if response.status_code == 200:
                 #print(response.text)
@@ -231,10 +240,10 @@ def table():
                 #return jsonify({'output':': ' + output})
 
             else:
-                return response.text  
+                return response.text
 
         except requests.exceptions.RequestException as error:
-            print("Error: ", error) 
+            print("Error: ", error)
         """
 
 
@@ -250,7 +259,7 @@ def device_table():
             url = "https://{}/api/3.5/devices/find?DeviceGroupID={}&limit={}".format(nm_host, nm_device_group, limit)
             print(url)
 
-            response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False)
+            response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
             print(response)
             if response.status_code == 200:
                 #print(response.text)
@@ -262,15 +271,15 @@ def device_table():
 
             else:
                 print('error')
-                return response.text  
+                return response.text
 
         except requests.exceptions.RequestException as error:
-            print("Error: ", error) 
+            print("Error: ", error)
 
 @app.route("/table2")
 def table2():
     return render_template('table2.html')
 
-            
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5050)
+    app.run(host="0.0.0.0", debug=True, port=5051)
