@@ -1,3 +1,7 @@
+<style>
+tr.selected {background-color: #a6a6a6;}
+</style>
+
 body, html {
     margin: 0;
     font-family: sans-serif;
@@ -21,6 +25,9 @@ table {
 th {
     height: 30px;
 }
+td.highlight {
+    background-color: whitesmoke !important;
+}
 
 td {
     text-align: center;
@@ -34,4 +41,8 @@ td {
 #content {
     width: 70%;
 }
+
+
+
+
 

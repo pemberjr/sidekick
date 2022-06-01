@@ -48,6 +48,7 @@ class StatusException(Exception):
 app = Flask(__name__)
 flask_secret = (config['DEFAULT']['FLASK_SECRET_KEY'])
 app.secret_key= flask_secret
+currentChassis = ""
 
 
 
@@ -181,18 +182,21 @@ def login():
 
         # Parse the NetMRI Password
         parsed_pw = urllib.parse.quote_plus(password)
+        try:
+            # Set the NetMRI Authentication Check
+            url = "https://{}/api/authenticate?username={}&password={}".format(nm_host, username, parsed_pw)
+            response = requests.get(url, headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
+            print(response)
+            if response.status_code == 200:
+                # Send to the discovery page (PASSED AUTH)
+                return redirect(url_for("discovery"))
 
-        # Set the NetMRI Authentication Check
-        url = "https://{}/api/authenticate?username={}&password={}".format(nm_host, username, parsed_pw)
-        response = requests.get(url, headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
-        print(response)
-        if response.status_code == 200:
-            # Send to the discovery page (PASSED AUTH)
-            return redirect(url_for("discovery"))
+            else:
+                # Back to login page (FAILED AUTH)
+                return render_template("login.html")
 
-        else:
-            # Back to login page (FAILED AUTH)
-            return render_template("login.html")
+        except requests.exceptions.RequestException as error:
+            print("Error: ", error)
 
     else:
         # GET REQUEST
@@ -220,31 +224,6 @@ def table():
     if "username" in session:
         print(session['username'])
         return render_template('devices.html')
-        """
-        limit=2100
-        try:
-            #url="I see you {}".format(nm_host)
-            url = "https://{}/api/3.5/devices/find?DeviceGroupID={}&limit={}".format(nm_host, nm_device_group, limit)
-            print(url)
-
-            response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
-            print(response)
-            if response.status_code == 200:
-                #print(response.text)
-                json_response = json.loads(response.text)
-
-                devices = json_response['devices']
-                print(len(devices))
-                return render_template('table.html', devices=devices)
-
-                #return jsonify({'output':': ' + output})
-
-            else:
-                return response.text
-
-        except requests.exceptions.RequestException as error:
-            print("Error: ", error)
-        """
 
 
 
@@ -252,20 +231,21 @@ def table():
 def device_table():
     if "username" in session:
         print(session['username'])
-        limit=2100
-
+        limit=2000
+        select="DeviceID,DeviceName,DeviceIPDotted,DeviceAssurance,DeviceSysLocation,DeviceModel"
+        
         try:
-            #url="I see you {}".format(nm_host)
-            url = "https://{}/api/3.5/devices/find?DeviceGroupID={}&limit={}".format(nm_host, nm_device_group, limit)
+            url = "https://{}/api/3.5/devices/find?DeviceGroupID={}&limit={}&select={}".format(nm_host, nm_device_group, limit, select)
             print(url)
 
             response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
             print(response)
             if response.status_code == 200:
-                #print(response.text)
                 json_response = json.loads(response.text)
-
                 data = {"data": json_response['devices']}
+
+                for row in data['data']:
+                    row.update({'DeviceName': row['DeviceName'].upper() })
 
                 return (data)
 
@@ -276,10 +256,165 @@ def device_table():
         except requests.exceptions.RequestException as error:
             print("Error: ", error)
 
+
+@app.route("/chassis_table", methods=["POST","GET"])
+def chassis_table():
+
+    if request.method == 'POST':
+        #print(request.json)
+        print("At Post")
+        parameters = dict(request.form)
+        print(parameters['device_id'])
+        deviceid = parameters['device_id']
+
+
+        if "username" in session:
+            print(session['username'])
+            nonChassisClass=[{}]
+            chassisLocater = "&PhysicalClass=chassis"
+
+            try:
+                url = "https://{}/api/3.5/device_physicals/find?DeviceID={}{}".format(nm_host, deviceid, chassisLocater)
+                print(url)
+
+                response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
+                print(response)
+                if response.status_code == 200:
+
+                    json_response = json.loads(response.text)
+
+                    data = {"data": json_response['device_physicals']}
+                    print(data)
+                    return (data)
+
+                else:
+                    print('error')
+                    return response.text
+
+            except requests.exceptions.RequestException as error:
+                print("Error: ", error)
+
+@app.route('/update_chassis', methods=['GET', 'POST'])
+def update_chassis():
+    print("@ update_chassis")
+    if "username" in session:
+        if request.method == 'POST':
+            parameters = dict(request.form)
+            print(parameters)
+            print("CRQ for this Chassis {}".format(parameters['install_record']))
+            custom_fields = {
+                'data_tag' : 'custom_device_tag',
+                'install_record' : 'custom_asset_install_record',
+                'install_date' : 'custom_asset_install_date',
+                'rack' : 'custom_rack',
+                'rack_elevation' : 'custom_rack_pos',
+                'rack_units' : 'custom_rack_units'
+                 }
+
+            physical_id = parameters['physical_id']
+
+            try:
+                url = "https://{}/api/3.5/device_physicals/find?DevicePhysicalID={}".format(nm_host, physical_id)
+                print(url)
+
+                response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
+                print(response)
+                if response.status_code == 200:
+                    #print(response.text)
+                    json_response = json.loads(response.text)
+
+                    data = json_response['device_physicals'][0]
+                    print(data)
+                    print(data['custom_device_tag'])
+
+                else:
+                    print('error')
+                    
+                    #return response.text
+
+            except requests.exceptions.RequestException as error:
+                print("Error: ", error)
+
+
+
+            for key,value in custom_fields.items():
+                print(key,value)
+                # CHECK IF COMPONENTS ATTRIBUTES VALUE MATCHES THE VALUE FROM THE POST PARAMETERS
+                if data[value] == parameters[key]:
+                    print("Match -> SideKick: {}  NetMRI {}".format(parameters[key], data[value]))
+
+                else:
+                    print("Don't Match -> SideKick: {}  NetMRI {}".format(parameters[key], data[value]))
+                    
+                    try:
+                        url = "https://{}/api/3.5/device_physicals/update_custom_field?DevicePhysicalID={}&{}={}".format(nm_host, data['DevicePhysicalID'], value, parameters[key])
+                        print(url)
+                        response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
+                        
+
+                        if response.status_code == 200:
+                            print(response.status_code)
+                            #print(response.text)
+                            #json_response = json.loads(response.text)
+                            #data = json_response
+                            #print(data)
+
+
+                        else:
+                            print('error')
+                            print(response.status_code)
+                            #return response.text
+                    
+                    except requests.exceptions.RequestException as error:
+                        print("Error: ", error)
+                 
+
+                print()
+
+            return (request.form)
+
+
+@app.route('/config', methods=['GET', 'POST'])
+def config():
+    if request.method == 'POST':
+        #Discovery IP is returned from HTTP:
+        device_id = request.form['device_id']
+
+        try:
+            url = "https://netmri.sce.com/api/3.5/infra_devices/running_config_text?DeviceID={}".format(device_id)
+            print(url)
+
+            response = requests.get(url, auth=(nm_user, nm_password), headers={"Content-Type" : "application/json", "Accept" : "application/json"}, verify=False, proxies=proxies)
+            print(response)
+            if response.status_code == 200:
+                print(response.text)
+                json_response = json.loads(response.text)
+
+                output = json_response['running_config_text']
+
+                return jsonify({'running_config_text':': ' + output})
+
+            else:
+                return response.text
+
+        except requests.exceptions.RequestException as error:
+            print("Error: ", error)
+
+
+        #return discovery_id
+        return redirect('/discovery')
+
+    else:
+        print('--- No POST')
+        print(discoveryip)
+        return response
+
+
+
 @app.route("/table2")
 def table2():
     return render_template('table2.html')
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=5051)
+    app.run(host="0.0.0.0", debug=False, port=5051)

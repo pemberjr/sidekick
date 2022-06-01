@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Discovery</title>
+<title>SideKick</title>
 {% endblock %}
 
 {% block body %}
@@ -66,7 +66,7 @@
                 <td>{{row['user']}}</td>
                 <td>{{row['submit_time']}}</td>
                 <td>
-                   <button class="btnEdit btn btn-warning">Status</button>
+                   <button class="btnStatus btn btn-warning">Status</button>
                     <!-- <a href="/update/">Update</a> -->
                 </td>
             </tr>
@@ -127,7 +127,7 @@
 var gblDiscoverId = ""; // Define global variable to be used in function
 
 $(document).ready(function() {
-  $(".btnEdit").click(function (e) {
+  $(".btnStatus").click(function (e) {
       e.preventDefault(); // prevent form from reloading page
       var currentTds = $(this).closest("tr").find("td"); // find all td of selected row
       var cell1 = $(currentTds).eq(1).text(); // eq= cell , text = inner text

@@ -1,17 +1,20 @@
 {% extends 'base.html' %}
 
 {% block head %}
-<title>Discovery</title>
+<title>SideKick</title>
 <link
 href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
 rel="stylesheet"
 integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
 crossorigin="anonymous"
 />
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css"/>
 {% endblock %}
 
 {% block body %}
+<style>
+  tr.selected {background-color: #e1ec97f6;}
+</style>
 <nav class="navbar border border-dark navbar-expand-lg navbar-light bg-light">
   <a class="navbar-brand" href="#">SideKick</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,19 +28,6 @@ crossorigin="anonymous"
       <li class="nav-item">
         <a class="nav-link" href="\devices">Devices<span class="sr-only">(current)</span></a>
       </li>
-      <!--li class="nav-item">
-        <a class="nav-link" href="#">Pricing</a>
-      </li>
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Dropdown link
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-          <a class="dropdown-item" href="#">Action</a>
-          <a class="dropdown-item" href="#">Another action</a>
-          <a class="dropdown-item" href="#">Something else here</a>
-        </div>
-      </li-->
     </ul>
   </div>
   <div class="navbar-right"><i class="bi bi-person"></i>
@@ -51,6 +41,10 @@ crossorigin="anonymous"
 
     <br>
 
+    <button class="btnChassis btn btn-secondary my-2 my-sm-0 btn-sm mr-1" id=btnChassis>Chassis</button>
+    <button class="btnConfig btn btn-secondary my-2 my-sm-0 btn-sm mr-1" id=btnConfig>Config</button>
+    <br>
+    <br>
     <table  id="datatable" class="table display table-bordered table-striped" >
         <thead>
           <tr>
@@ -63,8 +57,136 @@ crossorigin="anonymous"
           </tr>
         </thead>
     </table>
-
 </div>
+
+<!-- CHASSIS MODAL -->
+<div class="modal fade" id="chassis" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="chassis-modal-title" id="chassis-modal-title"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="container mt-4">
+          <button class="btnChassisUpdate btn btn-secondary my-2 my-sm-0 btn-sm mr-1" id="btnChassisUpdate">Update</button>
+          <br>
+          <br>
+          <table  id="chassisTable" class="table display table-bordered table-striped" >
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Device Name</th>
+                  <th>Device Tag</th>            
+                  <th>Physical Model</th>            
+                  <th>Physical Name</th>
+                  <th>Install Record</th>
+                  <th>Install Date</th>
+                  <th>Rack</th>
+                  <th>Rack Elev</th>
+                  <th>Rack Units</th>
+                </tr>
+              </thead>
+          </table>
+      </div>         
+      <div class="modal-footer">
+        <!--button type="submit" id=btnRefresh class="btnRefreshStatus btn btn-primary">Refresh</button-->
+      </div>               
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit CustomFields MODAL -->
+<div class="modal fade" id="updCustomFields" aria-labelledby="modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="updCustomFields-modal-title" id="updCustomFields-modal-title"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="container mt-4">
+          <!--button class="btnCustomFields btn btn btn-secondary my-2 my-sm-0 btn-sm mr-1" id="btnCustomFields">Update</button-->
+          <br>
+          <form class="row g-3">
+          <form action="#" id="chassis-edit-form" >
+            <input class="form-control" type="hidden" name="id">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="device_tag">Device Tag</label>
+                <input class="form-control" type="text" name="device_tag" id="device_tag" pattern="^I\d{4,5}$">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="">Install Record - (CRQ or INC#)</label>
+                <input class="form-control" type="text" name="install_record" id="install_record" pattern="^(CRQ|INC)\d{1,12}$">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="">Install Date</label>
+                <input class="form-control" type="text" name="install_date" id="install_date" >
+              </div>
+            </div>
+            <br>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="device_rack">Rack</label>
+                <input class="form-control" type="text" name="rack" id="rack">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="device_elevation">Rack Elevation</label>
+                <input class="form-control" type="text" name="rack_elevation" id="rack_elevation">
+              </div>
+            </div>        
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="device_rack_units">Rack Units</label>
+                <input class="form-control" type="text" name="rack_units" id="rack_units">
+              </div>
+            </div>
+
+
+
+
+      </div>         
+      <div class="modal-footer">
+        <button  type="submit" id=btnCustomFieldSubmit class="btnCustomFieldSubmit btn btn-primary">Submit</button>
+      </div>               
+    </form>
+  </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Config Modal -->
+<div class="modal fade" id="config-modal" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal-title">Running Config</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body"><small>
+        <pre id="running_config_text"></pre></small>           
+      <div class="modal-footer">
+        <!--button type="submit" id=btnCpmfogRefresh class="btnRefreshStatus btn btn-secondary">Refresh</button-->
+      </div>               
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
@@ -72,8 +194,14 @@ crossorigin="anonymous"
 <script src="https://cdn.datatables.net/1.12.0/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
+var gblDeviceID = ""; // Define global variable to be used in function
+var gblDeviceName = ""; // Define global variable to be used in function
+var gblDevicePhysicalID ="";
+var componentTable ="";
+document.querySelector('#btnChassis').disabled = true; // intialize button to disable
+document.querySelector('#btnConfig').disabled = true; // intialize button to disable
 $(document).ready(function() {
-  $('#datatable').DataTable({
+  var table = $('#datatable').DataTable({
             "ajax": {
                 // "url": "static/objects2.txt", // This works for a static file
                 "url": "/device_table", // This now also works
@@ -83,32 +211,201 @@ $(document).ready(function() {
             },
              'columns': [
                  { data: 'DeviceID' },
-                 { data: 'DeviceName' },
+                 { data: 'DeviceName'},
                  { data: 'DeviceIPDotted' },
                  { data: 'DeviceAssurance'},
                  { data: 'DeviceSysLocation' },
                  { data: 'DeviceModel' },
              ]
          });
+         $('#datatable tbody').on('click', 'tr', function () {
+          var dev = table.row( this ).data();
+          console.log(dev['DeviceID'])
+          if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+            document.querySelector('#btnChassis').disabled = true; // intialize button to disable
+            document.querySelector('#btnConfig').disabled = true; // intialize button to disable
+            console.log("remove selected");
+          } else {
+            table.$('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+            document.querySelector('#btnChassis').disabled = false; // intialize button to active
+            document.querySelector('#btnConfig').disabled = false; // intialize button to active
+            console.log("add selected");
+            gblDeviceID = table.row('.selected').data()['DeviceID'];
+            gblDeviceName = table.row('.selected').data()['DeviceName'];
+            console.log("gblDeviceName --> ", gblDeviceName)
+            document.getElementById("chassis-modal-title").innerHTML = "Chassis View:  " + gblDeviceName;
+          }
+
+    }); 
+
+    $(".btnChassis").click(function (e) {
+      console.log("btnChassis clicked.  DeviceID --> ", gblDeviceID)
+      document.querySelector('#btnChassisUpdate').disabled = true; // intialize button to disable
+      //e.preventDefault(); // prevent form from reloading page
+      $('#chassisTable').dataTable().fnClearTable();
+      $('#chassisTable').dataTable().fnDestroy();
+      $('#chassisTable tbody').remove();
+      console.log('About to get chassis info')
+      var  chassis_table = $('#chassisTable').DataTable({
+            "ajax": {
+                "type": "POST",
+                //"contentType":"application/json; charset=utf-8",
+                //"contentType": None,
+                "url": "/chassis_table", // This now also works
+                "dataType": "json",
+                "dataSrc": "data",
+                "data" : {"device_id": gblDeviceID},
+              
+              },
+             
+             'columns': [
+                 { data: 'DevicePhysicalID' },
+                 { data: 'PhysicalSerialNum' },
+                 { data: 'custom_device_tag' },
+                 { data: 'PhysicalModelName'},
+                 { data: 'PhysicalName' },
+                 { data: 'custom_asset_install_record' },
+                 { data: 'custom_asset_install_date' },
+                 { data: 'custom_rack' },
+                 { data: 'custom_rack_pos' },
+                 { data: 'custom_rack_units' },
+              ]
+        });
+      $("#chassis").modal('show')
+
+    //
+
+
+    //
+
+
+      $('#chassisTable tbody').on('click', 'tr', function () {
+          var chassisTable = chassis_table.row( this ).data();
+          console.log('Before IF in Chassis Table with ---> ',gblDeviceID);
+          console.log($(this));
+          console.log(chassisTable);
+
+          if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+            console.log("DevicePhysicalID --> ", chassisTable['DevicePhysicalID'])
+            console.log("remove selected");
+            document.querySelector('#btnChassisUpdate').disabled = true;
+          } else {
+            chassis_table.$('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+            console.log("DevicePhysicalID --> ", chassisTable['DevicePhysicalID'])
+            console.log("add selected");
+            document.querySelector('#btnChassisUpdate').disabled = false;
+          }
+
+      $(".btnChassisUpdate").click(function (e) {
+            console.log("Update Pressed", chassisTable['DevicePhysicalID'] );
+            gblDevicePhysicalID = chassisTable['DevicePhysicalID'];
+            document.getElementById("updCustomFields-modal-title").innerHTML = "Serial Number: " + chassisTable['PhysicalSerialNum']
+              + "  (managed by Device Name: " + gblDeviceName + ")";
+            document.getElementById('device_tag').value = chassisTable['custom_device_tag'];
+            document.getElementById('install_record').value = chassisTable['custom_asset_install_record'];
+            document.getElementById('install_date').value = chassisTable['custom_asset_install_date'];
+            document.getElementById('rack').value = chassisTable['custom_rack'];
+            document.getElementById('rack_elevation').value = chassisTable['custom_rack_pos'];
+            document.getElementById('rack_units').value = chassisTable['custom_rack_units'];
+            $("#updCustomFields").modal('show');
+
+          });
+  });
 });
 
-</script>
+});
+function validate(record){
+console.log(record.substr(3, record.length -3));
+console.log(record.length -3);
+let prefix = record.substr(0,3);
+let new_record = record.substr(3, record.length -3) ;
+console.log(new_record);
 
+for (let i = 0; i < (15 - record.length); i++) {
+  new_record = "0" + new_record;
+}
+console.log(prefix + new_record);
+return prefix + new_record;
+
+}
+
+</script>
 <script>
-$(document).ready(function () {
-  var mytable = $('#datatable').DataTable();
- 
-    $('#datatable tbody').on('click', 'tr', function () {
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-        } else {
-            mytable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-        }
-    }); 
-  });
-</script>
+  $(function() {
+    $('#chassis-edit-form').validate({
+      rules: {
 
+        device_tag: {
+          pattern: '^I\\d{4,5}$'
+        },
+        install_date: {
+          pattern: '[0-9][1-2])\/([0-2][0-9]|[3][0-1])\/((19|20)[0-9]{2}'
+        },
+        install_record: {
+          pattern: '^(CRQ|INC)\\d{1,12}$'
+        }
+      } 
+    }
+   );
+  })
+
+  $('form').on('submit', function(e) {
+          console.log('at validate function');
+          console.log("install record value: ",document.getElementById('install_record').value)
+          if (document.getElementById('install_record').value !== "" ) {
+          var record ="";
+          record = document.getElementById('install_record').value;
+          document.getElementById('install_record').value = validate(record);
+          console.log("Install Record: ",validate(record));
+          }
+          e.preventDefault();
+          $.ajax({
+                dataType: "json",
+                type : 'POST',
+                url : '/update_chassis',
+                data: {
+                  physical_id : gblDevicePhysicalID,
+                  data_tag : function(){return $("#device_tag").val();},
+                  install_record : function(){return $("#install_record").val();},
+                  install_date : function(){return $("#install_date").val();},
+                  rack : function(){return $("#rack").val();},
+                  rack_elevation : function(){return $("#rack_elevation").val();},
+                  rack_units : function(){return $("#rack_units").val();},
+                }
+           });
+           
+           e.preventDefault();
+           console.log("Chassis Table RU: ",chassisTable['custom_rack_units']);
+           $("#updCustomFields").modal('hide');
+           $("#chassis").modal('hide');
+      
+          });
+
+  $(function() {        
+      $("#btnConfig").click(function (e) {
+      console.log("btnConfig clicked.  DeviceID --> ", gblDeviceID)
+      console.log('About to get Config Info')
+      var runningConfig =
+        $.ajax({
+                "type": "POST",
+                "url": "/config",
+                "dataType": "json",
+                "dataSrc": "data",
+                "data" : {"device_id": gblDeviceID}  
+              }) 
+        .done(function(data) { 
+          $('#running_config_text').html(data.running_config_text).show();       
+          $("#config-modal").modal('show');   
+        });
+        event.preventDefault();
+      });
+    });
+
+</script>
 
 
 {% endblock %}
